@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package tasks.v1;
+
+option go_package = "github.com/faultysegment/boxedsnake/api/gen/tasks/v1;tasksv1";
+
+message SubmitTaskRequest {
+  string script_content = 1;
+  map<string, string> env_vars = 2;
+  int32 timeout_seconds = 3;
+}
+
+message SubmitTaskResponse {
+  string task_id = 1;
+  string status = 2;
+  string stdout = 3;
+  string stderr = 4;
+  string result_data = 5; // JSON string
+}
+
+service TaskService {
+  rpc ExecuteTask(SubmitTaskRequest) returns (SubmitTaskResponse);
+}
