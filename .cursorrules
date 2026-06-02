@@ -1,0 +1,24 @@
+# Boxed Snake AI Context Rules
+
+## Tech Stack
+* **Language**: Go (Client, Orchestrator)
+* **Communication (Client-Orchestrator)**: `connect-go` (gRPC/HTTP APIs via Protobuf)
+* **Messaging (Orchestrator-Worker)**: Redpanda (Kafka)
+* **Worker Execution**: Python (in isolated k8s containers)
+* **Architecture Modeling**: `likec4`
+* **Infrastructure**: Kubernetes
+
+## Guidelines
+1. Ensure all `connect-go` handlers are properly typed and securely handle payload passing to/from workers.
+2. The Orchestrator does NOT spawn pods directly via the k8s API. It must act as a Kafka Producer to publish tasks.
+3. The Orchestrator MUST use a Kafka client library to consume from Redpanda.
+4. Keep the architecture models updated in `docs/architecture.c4` using likec4 syntax.
+5. All Protobuf definitions should be placed in `api/`.
+
+## Structure Guidelines
+* **Standard Go Project Layout**: 
+  * All application entry points (`main.go`) MUST be inside `cmd/<app-name>/`.
+  * Shared Go packages that are not meant for public consumption MUST be inside `internal/`.
+  * Kubernetes manifests and Helm charts MUST be inside `deployments/`.
+  * The Orchestrator MUST use a Kafka client library to consume from Redpanda.
+  * Worker Python scripts MUST interact with Redpanda to report state and output.

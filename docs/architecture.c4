@@ -1,0 +1,46 @@
+specification {
+  element client {
+    shape person
+  }
+  element orchestrator {
+    shape component
+  }
+  element worker {
+    shape component
+    color secondary
+  }
+  element redpanda {
+    shape queue
+    color muted
+  }
+}
+
+model {
+  client = client "Boxed Snake Client" {
+    description "Submits Python task pipelines"
+  }
+  
+  orchestrator = orchestrator "Orchestrator Control Plane" {
+    description "API Gateway & Task Publisher (Go)"
+  }
+
+  redpanda = redpanda "Redpanda / Kafka" {
+    description "Message Broker (tasks & results topics)"
+  }
+  
+  worker = worker "Worker Daemon (Pool)" {
+    description "Long-running pods executing Python"
+  }
+  
+  client -> orchestrator "Submits tasks via connect-go"
+  orchestrator -> redpanda "Produces tasks to topic"
+  worker -> redpanda "Consumes tasks, Produces results"
+  orchestrator -> redpanda "Consumes results topic"
+}
+
+views {
+  view index {
+    title "Boxed Snake Architecture"
+    include *
+  }
+}
