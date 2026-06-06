@@ -4,10 +4,20 @@ package tasks.v1;
 
 option go_package = "github.com/faultysegment/boxedsnake/api/gen/tasks/v1;tasksv1";
 
+enum TaskType {
+  TASK_TYPE_UNSPECIFIED = 0;
+  TASK_TYPE_ONE_SHOT = 1;
+  TASK_TYPE_POSTPONED = 2;
+  TASK_TYPE_SCHEDULED = 3;
+}
+
 message SubmitTaskRequest {
   string script_content = 1;
   map<string, string> env_vars = 2;
   int32 timeout_seconds = 3;
+  TaskType task_type = 4;
+  int64 execute_at = 5; // Unix timestamp for postponed tasks
+  string cron_expression = 6; // Cron string for scheduled tasks
 }
 
 message SubmitTaskResponse {
@@ -18,6 +28,47 @@ message SubmitTaskResponse {
   string result_data = 5; // JSON string
 }
 
+message TaskResult {
+  string task_id = 1;
+  string status = 2;
+  string stdout = 3;
+  string stderr = 4;
+  string result_data = 5;
+  int64 executed_at = 6;
+}
+
+message GetTaskResultsRequest {
+  string task_id = 1;
+}
+
+message GetTaskResultsResponse {
+  repeated TaskResult results = 1;
+}
+
+message ListTasksRequest {}
+
+message TaskSummary {
+  string task_id = 1;
+  string status = 2;
+  int64 last_executed_at = 3;
+}
+
+message ListTasksResponse {
+  repeated TaskSummary tasks = 1;
+}
+
+message CancelTaskRequest {
+  string task_id = 1;
+}
+
+message CancelTaskResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 service TaskService {
   rpc ExecuteTask(SubmitTaskRequest) returns (SubmitTaskResponse);
+  rpc GetTaskResults(GetTaskResultsRequest) returns (GetTaskResultsResponse);
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
+  rpc CancelTask(CancelTaskRequest) returns (CancelTaskResponse);
 }

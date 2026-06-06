@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package scheduler.v1;
+
+import "tasks/v1/tasks.proto";
+
+option go_package = "github.com/faultysegment/boxedsnake/api/gen/scheduler/v1;schedulerv1";
+
+message ScheduleTaskRequest {
+  string script_content = 1;
+  map<string, string> env_vars = 2;
+  int32 timeout_seconds = 3;
+  tasks.v1.TaskType task_type = 4;
+  int64 execute_at = 5; // Unix timestamp
+  string cron_expression = 6;
+}
+
+message ScheduleTaskResponse {
+  string task_id = 1;
+  string status = 2;
+}
+
+message ListScheduledTasksRequest {}
+
+message ListScheduledTasksResponse {
+  repeated tasks.v1.TaskSummary tasks = 1;
+}
+
+message CancelScheduledTaskRequest {
+  string task_id = 1;
+}
+
+message CancelScheduledTaskResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+service SchedulerService {
+  rpc ScheduleTask(ScheduleTaskRequest) returns (ScheduleTaskResponse);
+  rpc ListScheduledTasks(ListScheduledTasksRequest) returns (ListScheduledTasksResponse);
+  rpc CancelScheduledTask(CancelScheduledTaskRequest) returns (CancelScheduledTaskResponse);
+}

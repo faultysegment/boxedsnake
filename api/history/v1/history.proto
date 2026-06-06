@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package history.v1;
+
+import "tasks/v1/tasks.proto";
+
+option go_package = "github.com/faultysegment/boxedsnake/api/gen/history/v1;historyv1";
+
+service HistoryService {
+  rpc GetTaskResults(tasks.v1.GetTaskResultsRequest) returns (tasks.v1.GetTaskResultsResponse);
+  rpc ListTasks(tasks.v1.ListTasksRequest) returns (tasks.v1.ListTasksResponse);
+}
