@@ -35,11 +35,21 @@ const (
 const (
 	// TaskServiceExecuteTaskProcedure is the fully-qualified name of the TaskService's ExecuteTask RPC.
 	TaskServiceExecuteTaskProcedure = "/tasks.v1.TaskService/ExecuteTask"
+	// TaskServiceGetTaskResultsProcedure is the fully-qualified name of the TaskService's
+	// GetTaskResults RPC.
+	TaskServiceGetTaskResultsProcedure = "/tasks.v1.TaskService/GetTaskResults"
+	// TaskServiceListTasksProcedure is the fully-qualified name of the TaskService's ListTasks RPC.
+	TaskServiceListTasksProcedure = "/tasks.v1.TaskService/ListTasks"
+	// TaskServiceCancelTaskProcedure is the fully-qualified name of the TaskService's CancelTask RPC.
+	TaskServiceCancelTaskProcedure = "/tasks.v1.TaskService/CancelTask"
 )
 
 // TaskServiceClient is a client for the tasks.v1.TaskService service.
 type TaskServiceClient interface {
 	ExecuteTask(context.Context, *connect.Request[v1.SubmitTaskRequest]) (*connect.Response[v1.SubmitTaskResponse], error)
+	GetTaskResults(context.Context, *connect.Request[v1.GetTaskResultsRequest]) (*connect.Response[v1.GetTaskResultsResponse], error)
+	ListTasks(context.Context, *connect.Request[v1.ListTasksRequest]) (*connect.Response[v1.ListTasksResponse], error)
+	CancelTask(context.Context, *connect.Request[v1.CancelTaskRequest]) (*connect.Response[v1.CancelTaskResponse], error)
 }
 
 // NewTaskServiceClient constructs a client for the tasks.v1.TaskService service. By default, it
@@ -59,12 +69,33 @@ func NewTaskServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(taskServiceMethods.ByName("ExecuteTask")),
 			connect.WithClientOptions(opts...),
 		),
+		getTaskResults: connect.NewClient[v1.GetTaskResultsRequest, v1.GetTaskResultsResponse](
+			httpClient,
+			baseURL+TaskServiceGetTaskResultsProcedure,
+			connect.WithSchema(taskServiceMethods.ByName("GetTaskResults")),
+			connect.WithClientOptions(opts...),
+		),
+		listTasks: connect.NewClient[v1.ListTasksRequest, v1.ListTasksResponse](
+			httpClient,
+			baseURL+TaskServiceListTasksProcedure,
+			connect.WithSchema(taskServiceMethods.ByName("ListTasks")),
+			connect.WithClientOptions(opts...),
+		),
+		cancelTask: connect.NewClient[v1.CancelTaskRequest, v1.CancelTaskResponse](
+			httpClient,
+			baseURL+TaskServiceCancelTaskProcedure,
+			connect.WithSchema(taskServiceMethods.ByName("CancelTask")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // taskServiceClient implements TaskServiceClient.
 type taskServiceClient struct {
-	executeTask *connect.Client[v1.SubmitTaskRequest, v1.SubmitTaskResponse]
+	executeTask    *connect.Client[v1.SubmitTaskRequest, v1.SubmitTaskResponse]
+	getTaskResults *connect.Client[v1.GetTaskResultsRequest, v1.GetTaskResultsResponse]
+	listTasks      *connect.Client[v1.ListTasksRequest, v1.ListTasksResponse]
+	cancelTask     *connect.Client[v1.CancelTaskRequest, v1.CancelTaskResponse]
 }
 
 // ExecuteTask calls tasks.v1.TaskService.ExecuteTask.
@@ -72,9 +103,27 @@ func (c *taskServiceClient) ExecuteTask(ctx context.Context, req *connect.Reques
 	return c.executeTask.CallUnary(ctx, req)
 }
 
+// GetTaskResults calls tasks.v1.TaskService.GetTaskResults.
+func (c *taskServiceClient) GetTaskResults(ctx context.Context, req *connect.Request[v1.GetTaskResultsRequest]) (*connect.Response[v1.GetTaskResultsResponse], error) {
+	return c.getTaskResults.CallUnary(ctx, req)
+}
+
+// ListTasks calls tasks.v1.TaskService.ListTasks.
+func (c *taskServiceClient) ListTasks(ctx context.Context, req *connect.Request[v1.ListTasksRequest]) (*connect.Response[v1.ListTasksResponse], error) {
+	return c.listTasks.CallUnary(ctx, req)
+}
+
+// CancelTask calls tasks.v1.TaskService.CancelTask.
+func (c *taskServiceClient) CancelTask(ctx context.Context, req *connect.Request[v1.CancelTaskRequest]) (*connect.Response[v1.CancelTaskResponse], error) {
+	return c.cancelTask.CallUnary(ctx, req)
+}
+
 // TaskServiceHandler is an implementation of the tasks.v1.TaskService service.
 type TaskServiceHandler interface {
 	ExecuteTask(context.Context, *connect.Request[v1.SubmitTaskRequest]) (*connect.Response[v1.SubmitTaskResponse], error)
+	GetTaskResults(context.Context, *connect.Request[v1.GetTaskResultsRequest]) (*connect.Response[v1.GetTaskResultsResponse], error)
+	ListTasks(context.Context, *connect.Request[v1.ListTasksRequest]) (*connect.Response[v1.ListTasksResponse], error)
+	CancelTask(context.Context, *connect.Request[v1.CancelTaskRequest]) (*connect.Response[v1.CancelTaskResponse], error)
 }
 
 // NewTaskServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -90,10 +139,34 @@ func NewTaskServiceHandler(svc TaskServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(taskServiceMethods.ByName("ExecuteTask")),
 		connect.WithHandlerOptions(opts...),
 	)
+	taskServiceGetTaskResultsHandler := connect.NewUnaryHandler(
+		TaskServiceGetTaskResultsProcedure,
+		svc.GetTaskResults,
+		connect.WithSchema(taskServiceMethods.ByName("GetTaskResults")),
+		connect.WithHandlerOptions(opts...),
+	)
+	taskServiceListTasksHandler := connect.NewUnaryHandler(
+		TaskServiceListTasksProcedure,
+		svc.ListTasks,
+		connect.WithSchema(taskServiceMethods.ByName("ListTasks")),
+		connect.WithHandlerOptions(opts...),
+	)
+	taskServiceCancelTaskHandler := connect.NewUnaryHandler(
+		TaskServiceCancelTaskProcedure,
+		svc.CancelTask,
+		connect.WithSchema(taskServiceMethods.ByName("CancelTask")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/tasks.v1.TaskService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TaskServiceExecuteTaskProcedure:
 			taskServiceExecuteTaskHandler.ServeHTTP(w, r)
+		case TaskServiceGetTaskResultsProcedure:
+			taskServiceGetTaskResultsHandler.ServeHTTP(w, r)
+		case TaskServiceListTasksProcedure:
+			taskServiceListTasksHandler.ServeHTTP(w, r)
+		case TaskServiceCancelTaskProcedure:
+			taskServiceCancelTaskHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -105,4 +178,16 @@ type UnimplementedTaskServiceHandler struct{}
 
 func (UnimplementedTaskServiceHandler) ExecuteTask(context.Context, *connect.Request[v1.SubmitTaskRequest]) (*connect.Response[v1.SubmitTaskResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("tasks.v1.TaskService.ExecuteTask is not implemented"))
+}
+
+func (UnimplementedTaskServiceHandler) GetTaskResults(context.Context, *connect.Request[v1.GetTaskResultsRequest]) (*connect.Response[v1.GetTaskResultsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("tasks.v1.TaskService.GetTaskResults is not implemented"))
+}
+
+func (UnimplementedTaskServiceHandler) ListTasks(context.Context, *connect.Request[v1.ListTasksRequest]) (*connect.Response[v1.ListTasksResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("tasks.v1.TaskService.ListTasks is not implemented"))
+}
+
+func (UnimplementedTaskServiceHandler) CancelTask(context.Context, *connect.Request[v1.CancelTaskRequest]) (*connect.Response[v1.CancelTaskResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("tasks.v1.TaskService.CancelTask is not implemented"))
 }

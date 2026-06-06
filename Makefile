@@ -20,18 +20,25 @@ cluster:
 docker-build:
 	@echo "Building Docker images..."
 	docker build -t boxedsnake-orchestrator:latest -f cmd/orchestrator/Dockerfile .
+	docker build -t boxedsnake-scheduler:latest -f cmd/scheduler/Dockerfile .
+	docker build -t boxedsnake-history:latest -f cmd/history/Dockerfile .
 	cd workers && docker build -t boxedsnake-worker:latest -f Dockerfile .
 
 docker-load:
 	@echo "Loading images into Kind cluster..."
 	$(KIND) load docker-image boxedsnake-orchestrator:latest --name $(CLUSTER_NAME)
+	$(KIND) load docker-image boxedsnake-scheduler:latest --name $(CLUSTER_NAME)
+	$(KIND) load docker-image boxedsnake-history:latest --name $(CLUSTER_NAME)
 	$(KIND) load docker-image boxedsnake-worker:latest --name $(CLUSTER_NAME)
 
 deploy:
 	@echo "Deploying to Kubernetes..."
 	kubectl apply -f deployments/k8s/
 	@echo "Waiting for pods to be ready..."
+	kubectl wait --for=condition=ready pod -l app=postgres --timeout=120s || true
 	kubectl wait --for=condition=ready pod -l app=redpanda --timeout=120s || true
+	kubectl wait --for=condition=ready pod -l app=scheduler --timeout=120s || true
+	kubectl wait --for=condition=ready pod -l app=history --timeout=120s || true
 	kubectl wait --for=condition=ready pod -l app=orchestrator --timeout=120s || true
 	kubectl wait --for=condition=ready pod -l app=worker --timeout=120s || true
 

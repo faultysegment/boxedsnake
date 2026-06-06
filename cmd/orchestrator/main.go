@@ -47,8 +47,18 @@ func main() {
 	defer cancel()
 	go consumer.Run(ctx)
 
+	schedulerURL := os.Getenv("SCHEDULER_URL")
+	if schedulerURL == "" {
+		schedulerURL = "http://localhost:8081"
+	}
+
+	historyURL := os.Getenv("HISTORY_URL")
+	if historyURL == "" {
+		historyURL = "http://localhost:8082"
+	}
+
 	// Setup TaskServer and Connect API
-	taskServer := server.NewTaskServer(producer, consumer)
+	taskServer := server.NewTaskServer(producer, consumer, schedulerURL, historyURL)
 	mux := http.NewServeMux()
 	path, handler := tasksv1connect.NewTaskServiceHandler(taskServer)
 	mux.Handle(path, handler)
